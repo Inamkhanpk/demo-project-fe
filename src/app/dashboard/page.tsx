@@ -74,78 +74,88 @@
 //   );
 // }
 
+'use client';
+import { useEffect, useState, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import FiltersBar from '@/components/FiltersBar';
+import LineChartPanel from '@/components/LineChartPanel';
+import AlertStrip from '@/components/AlertStrip';
+import DownloadCsvButton from '@/components/DownloadCsvButton';
+import { fetchMetrics } from '../lib/api';
+import type { MetricsResponse } from '../utils/types';
 
-'use client'
-
-import { useEffect, useState, useCallback } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
-
-import FiltersBar from '@/components/FiltersBar'
-import LineChartPanel from '@/components/LineChartPanel'
-import AlertStrip from '@/components/AlertStrip'
-import DownloadCsvButton from '@/components/DownloadCsvButton'
-import { fetchMetrics } from '../lib/api'
-import type { MetricsResponse } from '../utils/types'
-
-// Force runtime rendering to avoid build-time prerender errors
-export const dynamic = 'force-dynamic'
-
-export default function DashboardPage() {
-  const searchParams = useSearchParams()
-  const router = useRouter()
-
-  // Read range from URL, default to 'YTD'
-  const range = searchParams.get('range') || 'YTD'
-
-  const [data, setData] = useState<MetricsResponse | null>(null)
-  const [loading, setLoading] = useState<boolean>(false)
-  const [error, setError] = useState<string | null>(null)
-
-  // Fetch metrics based on current URL params
-  const fetchData = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const params = new URLSearchParams(searchParams.toString())
-      const result = await fetchMetrics(params)
-      setData(result)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setLoading(false)
+export default function Page() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  
+  // Initialize params from URL, with fallback to YTD
+  const [params, setParams] = useState<URLSearchParams>(() => {
+    const urlParams = new URLSearchParams(searchParams.toString());
+    if (!urlParams.has('range')) {
+      urlParams.set('range', 'YTD');
     }
-  }, [searchParams])
+    return urlParams;
+  });
+  
+  const [data, setData] = useState<MetricsResponse | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await fetchMetrics(params);
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  }, [params]);
 
   useEffect(() => {
-    fetchData()
-  }, [fetchData])
+    fetchData();
+  }, [fetchData]);
 
-  // Update URL when filters change
-  const handleFiltersChange = (newParams: URLSearchParams) => {
-    router.push(`/dashboard?${newParams.toString()}`)
-  }
+  // Sync URL when params change
+  useEffect(() => {
+    router.replace(`/dashboard?${params.toString()}`, { scroll: false });
+  }, [params, router]);
+
+  const handleFiltersChange = useCallback((newParams: URLSearchParams) => {
+    setParams(newParams);
+  }, []);
 
   return (
     <div className="min-h-screen">
-      <FiltersBar
-        onChange={handleFiltersChange}
-        //initialParams={searchParams}
-      />
-
-      {data && <AlertStrip params={searchParams} />}
+      <FiltersBar onChange={handleFiltersChange}  />
+      {data && <AlertStrip params={params} />}
 
       <main className="max-w-6xl mx-auto p-4 space-y-4">
         <header className="flex justify-between items-center">
           <h1 className="text-2xl font-semibold">Business Performance Dashboard</h1>
-          <DownloadCsvButton params={searchParams} />
+          <DownloadCsvButton params={params} />
         </header>
 
         {loading && (
-          <div className="animate-pulse h-[420px] bg-neutral-200 rounded-2xl" />
+          <div className="flex items-center justify-center h-[420px]">
+            <div className="animate-pulse h-full w-full bg-neutral-200 rounded-2xl" />
+          </div>
         )}
 
         {!loading && error && (
-          <div className="bg-red-50 border rounded p-4 text-red-700">{error}</div>
+          <div className="bg-red-50 border border-red-200 rounded p-4 text-red-700">
+            <p className="font-medium">Error loading data:</p>
+            <p>{error}</p>
+            <button 
+              onClick={fetchData}
+              className="mt-2 px-3 py-1 bg-red-100 hover:bg-red-200 rounded text-sm"
+            >
+              Retry
+            </button>
+          </div>
         )}
 
         {!loading && data && (
@@ -158,7 +168,9 @@ export default function DashboardPage() {
               ] as const).map(({ label, value }) => (
                 <div key={label} className="bg-white rounded-2xl p-4 shadow">
                   <div className="text-sm opacity-60">{label}</div>
-                  <div className="text-2xl font-semibold">${value.toLocaleString()}</div>
+                  <div className="text-2xl font-semibold">
+                    ${value.toLocaleString()}
+                  </div>
                 </div>
               ))}
             </section>
@@ -168,5 +180,7 @@ export default function DashboardPage() {
         )}
       </main>
     </div>
-  )
+  );
 }
+
+
