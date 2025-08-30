@@ -23,3 +23,7 @@
 ## Run the project using command
 ### npm run dev
 
+# Step:6 
+## Open th browser and write to view frontend 
+### http://localhost:3000
+
