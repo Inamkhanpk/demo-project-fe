@@ -6,11 +6,11 @@ import AlertStrip from '@/components/AlertStrip';
 import DownloadCsvButton from '@/components/DownloadCsvButton';
 import { fetchMetrics } from '../lib/api';
 import type { MetricsResponse } from '../utils/types';
-
+export const dynamic = 'force-dynamic'
 export default function Page() {
   const [params, setParams] = useState(() => new URLSearchParams([['range', 'YTD']]));
   const [data, setData] = useState<MetricsResponse | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -44,6 +44,7 @@ export default function Page() {
         </header>
 
         {loading && <div className="animate-pulse h-[420px] bg-neutral-200 rounded-2xl" />}
+         {loading && <div className="animate-pulse h-[420px] bg-neutral-200 rounded-2xl" />}
 
         {!loading && error && (
           <div className="bg-red-50 border rounded p-4 text-red-700">{error}</div>
