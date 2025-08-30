@@ -6,7 +6,7 @@ import AlertStrip from '@/components/AlertStrip';
 import DownloadCsvButton from '@/components/DownloadCsvButton';
 import { fetchMetrics } from '../lib/api';
 import type { MetricsResponse } from '../utils/types';
-export const dynamic = 'force-dynamic'
+
 export default function Page() {
   const [params, setParams] = useState(() => new URLSearchParams([['range', 'YTD']]));
   const [data, setData] = useState<MetricsResponse | null>(null);
