@@ -1,7 +1,7 @@
 const BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
 
 export async function fetchMetrics(params: URLSearchParams) {
-  const res = await fetch(`${BASE}/metrics?${params.toString()}`, { cache: 'no-store', credentials: 'include' });
+  const res = await fetch(`${BASE}/metrics?${params.toString()}`, { cache: 'no-store' });
   if (!res.ok) throw new Error('Failed to fetch metrics');
   return res.json();
 }
@@ -21,7 +21,7 @@ export async function login( email: string, password: string) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
-    credentials: 'include',
+   
   });
 
   if (!res.ok) {
